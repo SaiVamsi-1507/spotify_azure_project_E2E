@@ -461,7 +461,8 @@
 								"childItems"
 							],
 							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
 								"enablePartitionDiscovery": false
 							},
 							"formatSettings": {
@@ -1042,6 +1043,35 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/trigger1')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-01-22T04:08:00",
+						"endTime": "2026-01-23T04:08:00",
+						"timeZone": "India Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								5
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1084,6 +1114,12 @@
 						},
 						{
 							"name": "alterRows"
+						},
+						{
+							"name": "HighestSpent"
+						},
+						{
+							"name": "PriceCastToInteger"
 						}
 					],
 					"scriptLines": [
@@ -1122,6 +1158,12 @@
 						"     product_id = max(product_id)) ~> aggregate",
 						"split1@amex derive(payment = coalesce(payment,'N/A')) ~> derivedColumn",
 						"aggregate alterRow(insertIf(1==1)) ~> alterRows",
+						"PriceCastToInteger rank(desc(price, true),",
+						"     output(rank as long)) ~> HighestSpent",
+						"split1@mastercard cast(output(",
+						"          price as integer",
+						"     ),",
+						"     errors: true) ~> PriceCastToInteger",
 						"alterRows sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     umask: 0022,",
