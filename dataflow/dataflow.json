@@ -39,6 +39,12 @@
 				},
 				{
 					"name": "alterRows"
+				},
+				{
+					"name": "HighestSpent"
+				},
+				{
+					"name": "PriceCastToInteger"
 				}
 			],
 			"scriptLines": [
@@ -77,6 +83,12 @@
 				"     product_id = max(product_id)) ~> aggregate",
 				"split1@amex derive(payment = coalesce(payment,'N/A')) ~> derivedColumn",
 				"aggregate alterRow(insertIf(1==1)) ~> alterRows",
+				"PriceCastToInteger rank(desc(price, true),",
+				"     output(rank as long)) ~> HighestSpent",
+				"split1@mastercard cast(output(",
+				"          price as integer",
+				"     ),",
+				"     errors: true) ~> PriceCastToInteger",
 				"alterRows sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     umask: 0022,",
